@@ -315,10 +315,10 @@ impl DocumentIndex {
 
     fn should_exclude(path: &Path, org_root: &Path) -> bool {
         let relative = path.strip_prefix(org_root).unwrap_or(path);
-        let first_component = relative.components().next();
+        let components: Vec<_> = relative.components().collect();
 
-        if let Some(component) = first_component {
-            let name = component.as_os_str().to_string_lossy();
+        if let Some(first) = components.first() {
+            let name = first.as_os_str().to_string_lossy();
             let excluded = [
                 "node_modules",
                 ".git",
@@ -336,8 +336,30 @@ impl DocumentIndex {
             }
 
             // Handle projects folder specially - only index CLAUDE.md and README.md
-            if name == "projects" && path.is_dir() {
-                // We'll handle this in the filter logic
+            // at the immediate project level (projects/<name>/CLAUDE.md or README.md)
+            if name == "projects" {
+                // Allow the projects directory itself and immediate subdirectories
+                // But for files, only allow CLAUDE.md and README.md at project root
+                if path.is_file() {
+                    // Check if this is projects/<project>/CLAUDE.md or README.md
+                    // components would be: ["projects", "<project-name>", "CLAUDE.md"]
+                    if components.len() == 3 {
+                        if let Some(filename) = path.file_name() {
+                            let fname = filename.to_string_lossy();
+                            if fname == "CLAUDE.md" || fname == "README.md" {
+                                return false; // Allow these files
+                            }
+                        }
+                    }
+                    // Exclude all other files in projects/
+                    return true;
+                }
+                // For directories inside projects/, exclude deeply nested ones
+                // Allow: projects/, projects/<name>/
+                // Exclude: projects/<name>/<anything>/
+                if path.is_dir() && components.len() > 2 {
+                    return true;
+                }
             }
         }
 
