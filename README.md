@@ -87,10 +87,18 @@ Environment variables:
 
 ## Native App (Tauri)
 
-For a native desktop experience:
+For a native desktop experience with no external dependencies:
 
 ```bash
-# Requires Rust toolchain
-pnpm tauri:dev   # Development
-pnpm tauri:build # Production build (~10MB)
+# Requirements: Rust toolchain + pnpm
+
+# Development (hot reload)
+pnpm tauri dev
+
+# Production build (~8MB standalone exe)
+pnpm tauri build
 ```
+
+The built executable is at `src-tauri/target/release/org-viewer.exe`.
+
+**Note:** Always use `pnpm tauri build` (not `cargo build`). This builds the frontend first, then bundles it into the native app.

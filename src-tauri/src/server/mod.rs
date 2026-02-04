@@ -39,11 +39,14 @@ pub async fn start_server(org_root: PathBuf, port: u16) -> Result<(), Box<dyn st
 
     let start_time = std::time::Instant::now();
 
-    // Build initial index
-    log_to_file("Building document index...");
+    // Load index from cache or build incrementally
+    log_to_file("Loading document index...");
     let mut index = DocumentIndex::new(&org_root);
-    index.build_index().await;
-    log_to_file(&format!("Index built: {} documents", index.get_documents().len()));
+    let (total, cached, parsed, removed) = index.load_or_build().await;
+    log_to_file(&format!(
+        "Index loaded: {} total ({} cached, {} parsed, {} removed)",
+        total, cached, parsed, removed
+    ));
 
     let state = Arc::new(AppState {
         index: Arc::new(RwLock::new(index)),
