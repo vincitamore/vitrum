@@ -229,18 +229,58 @@ impl DocumentIndex {
 
         // Rebuild backlinks
         for (doc_path, doc) in self.documents.iter_mut() {
+            // Get filename stem (e.g., "my-task" from "tasks/my-task.md")
             let doc_name = Path::new(doc_path)
                 .file_stem()
                 .map(|s| s.to_string_lossy().to_string())
                 .unwrap_or_default();
 
+            // Get path without .md extension (e.g., "tasks/my-task")
+            let doc_path_no_ext = doc_path.strip_suffix(".md").unwrap_or(doc_path);
+
+            // For project files, also match the project folder name
+            // e.g., "projects/org-viewer/README.md" should match [[org-viewer]]
+            let project_name = if doc_path.starts_with("projects/") {
+                doc_path
+                    .strip_prefix("projects/")
+                    .and_then(|p| p.split('/').next())
+                    .map(|s| s.to_string())
+            } else {
+                None
+            };
+
             for (other_path, other_links) in &links_map {
-                if other_path != doc_path
-                    && other_links
-                        .iter()
-                        .any(|link| link.to_lowercase() == doc_name.to_lowercase())
-                {
-                    doc.backlinks.push(other_path.clone());
+                if other_path != doc_path {
+                    let has_link = other_links.iter().any(|link| {
+                        let link_lower = link.to_lowercase();
+                        let doc_name_lower = doc_name.to_lowercase();
+
+                        // Skip generic names like README and CLAUDE for stem matching
+                        let is_generic = doc_name_lower == "readme" || doc_name_lower == "claude";
+
+                        // Match by full path (without .md)
+                        if link_lower == doc_path_no_ext.to_lowercase() {
+                            return true;
+                        }
+
+                        // Match by filename stem (but not for generic names)
+                        if !is_generic && link_lower == doc_name_lower {
+                            return true;
+                        }
+
+                        // Match project folder name for project files
+                        if let Some(ref proj) = project_name {
+                            if link_lower == proj.to_lowercase() {
+                                return true;
+                            }
+                        }
+
+                        false
+                    });
+
+                    if has_link {
+                        doc.backlinks.push(other_path.clone());
+                    }
                 }
             }
         }
