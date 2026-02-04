@@ -28,6 +28,12 @@ Auto-generated tag index pages group related documents:
 
 ![Tag Page](screenshots/org-viewer-tag-page-example.png)
 
+### Themes
+
+Six color themes available via `t` key:
+
+![Themes](screenshots/org-viewer-themes.png)
+
 ## Quick Start
 
 ```bash
