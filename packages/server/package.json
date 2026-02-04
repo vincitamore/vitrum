@@ -1,0 +1,17 @@
+{
+  "name": "@org-viewer/server",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "build": "bun build src/index.ts --compile --outfile dist/server"
+  },
+  "dependencies": {
+    "hono": "^4.6.0",
+    "gray-matter": "^4.0.3",
+    "fuse.js": "^7.0.0"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.1.0"
+  }
+}

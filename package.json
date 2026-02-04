@@ -1,0 +1,24 @@
+{
+  "name": "org-viewer",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "dev": "turbo dev",
+    "dev:server": "pnpm --filter @org-viewer/server dev",
+    "dev:client": "pnpm --filter @org-viewer/client dev",
+    "build": "turbo build",
+    "build:server": "pnpm --filter @org-viewer/server build",
+    "build:client": "pnpm --filter @org-viewer/client build",
+    "build:mcp": "pnpm --filter @org-viewer/mcp build",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.0.0",
+    "png-to-ico": "^3.0.1",
+    "sharp": "^0.34.5",
+    "turbo": "^2.0.0"
+  }
+}
