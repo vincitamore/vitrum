@@ -9,6 +9,7 @@ import DocumentView from './components/DocumentView';
 import Graph from './components/Graph';
 import CodeView from './components/CodeView';
 import ThemePicker from './components/ThemePicker';
+import TitleBar from './components/TitleBar';
 
 // Check if running in Tauri
 const isTauri = typeof window !== 'undefined' && '__TAURI__' in window;
@@ -169,6 +170,9 @@ function App() {
 
   return (
     <div className="h-full flex flex-col">
+      {/* Custom title bar (Tauri only — replaces native window chrome) */}
+      {isTauri && <TitleBar />}
+
       {/* Header */}
       <header
         className="flex items-center justify-between px-4 py-2 border-b shrink-0"
