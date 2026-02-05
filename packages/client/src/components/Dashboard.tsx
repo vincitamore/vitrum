@@ -10,7 +10,7 @@ export default function Dashboard({ status, onSelectDocument, onRefresh }: Dashb
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
         <StatCard label="Total Docs" value={status.documents.total} />
         <StatCard
           label="Tasks"
@@ -27,6 +27,12 @@ export default function Dashboard({ status, onSelectDocument, onRefresh }: Dashb
           label="Inbox"
           value={status.documents.byType.inbox || 0}
           color="var(--term-warning)"
+        />
+        <StatCard
+          label="Reminders"
+          value={status.documents.byType.reminder || 0}
+          subValue={`${status.documents.byStatus.pending || 0} pending`}
+          color="#ff6b6b"
         />
       </div>
 
@@ -71,6 +77,7 @@ export default function Dashboard({ status, onSelectDocument, onRefresh }: Dashb
                         backgroundColor: 'var(--term-selection)',
                         color: doc.type === 'task' ? 'var(--term-success)' :
                                doc.type === 'knowledge' ? 'var(--term-info)' :
+                               doc.type === 'reminder' ? '#ff6b6b' :
                                'var(--term-warning)',
                       }}
                     >

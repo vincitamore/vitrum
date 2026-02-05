@@ -12,7 +12,7 @@ import ThemePicker from './components/ThemePicker';
 // Check if running in Tauri
 const isTauri = typeof window !== 'undefined' && '__TAURI__' in window;
 
-type View = 'dashboard' | 'tasks' | 'knowledge' | 'inbox' | 'graph';
+type View = 'dashboard' | 'tasks' | 'knowledge' | 'inbox' | 'reminders' | 'graph';
 type ViewWithDocument = View | 'document';
 
 function App() {
@@ -116,8 +116,9 @@ function App() {
         if (e.key === '1') { e.preventDefault(); setView('dashboard'); }
         if (e.key === '2') { e.preventDefault(); setView('tasks'); }
         if (e.key === '3') { e.preventDefault(); setView('knowledge'); }
-        if (e.key === '4') { e.preventDefault(); setView('graph'); }
-        if (e.key === '5') { e.preventDefault(); setView('inbox'); }
+        if (e.key === '4') { e.preventDefault(); setView('inbox'); }
+        if (e.key === '5') { e.preventDefault(); setView('reminders'); }
+        if (e.key === '6') { e.preventDefault(); setView('graph'); }
       }
     };
 
@@ -180,8 +181,9 @@ function App() {
               { key: '1', label: 'Home', view: 'dashboard' as View },
               { key: '2', label: 'Tasks', view: 'tasks' as View },
               { key: '3', label: 'KB', view: 'knowledge' as View },
-              { key: '4', label: 'Graph', view: 'graph' as View },
-              { key: '5', label: 'Inbox', view: 'inbox' as View },
+              { key: '4', label: 'Inbox', view: 'inbox' as View },
+              { key: '5', label: 'Reminders', view: 'reminders' as View },
+              { key: '6', label: 'Graph', view: 'graph' as View },
             ].map((item) => (
               <button
                 key={item.key}
@@ -281,6 +283,9 @@ function App() {
               {view === 'inbox' && (
                 <DocumentList type="inbox" title="Inbox" onSelect={handleSelectDocument} />
               )}
+              {view === 'reminders' && (
+                <DocumentList type="reminder" title="Reminders" onSelect={handleSelectDocument} />
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -295,8 +300,9 @@ function App() {
           { key: '1', label: 'Home', view: 'dashboard' as View },
           { key: '2', label: 'Tasks', view: 'tasks' as View },
           { key: '3', label: 'KB', view: 'knowledge' as View },
-          { key: '4', label: 'Graph', view: 'graph' as View },
-          { key: '5', label: 'Inbox', view: 'inbox' as View },
+          { key: '4', label: 'Inbox', view: 'inbox' as View },
+          { key: '5', label: '⏰', view: 'reminders' as View },
+          { key: '6', label: 'Graph', view: 'graph' as View },
         ].map((item) => (
           <button
             key={item.key}

@@ -84,7 +84,7 @@ function inferType(
     if (t === 'tag-index' || t === 'tag') {
       return 'tag';
     }
-    if (['task', 'knowledge', 'inbox', 'project'].includes(t)) {
+    if (['task', 'knowledge', 'inbox', 'reminder', 'project'].includes(t)) {
       return t as OrgDocument['type'];
     }
   }
@@ -98,6 +98,8 @@ function inferType(
       return 'knowledge';
     case 'inbox':
       return 'inbox';
+    case 'reminders':
+      return 'reminder';
     case 'projects':
       return 'project';
     case 'tags':

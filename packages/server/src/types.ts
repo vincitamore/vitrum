@@ -1,7 +1,7 @@
 export interface OrgDocument {
   path: string;
   title: string;
-  type: 'task' | 'knowledge' | 'inbox' | 'project' | 'tag' | 'other';
+  type: 'task' | 'knowledge' | 'inbox' | 'reminder' | 'project' | 'tag' | 'other';
   status?: string;
   tags: string[];
   created: string;

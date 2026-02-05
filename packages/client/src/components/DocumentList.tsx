@@ -3,7 +3,7 @@ import { api, type FileListItem } from '../lib/api';
 import { liveReload } from '../lib/websocket';
 
 interface DocumentListProps {
-  type: 'task' | 'knowledge' | 'inbox';
+  type: 'task' | 'knowledge' | 'inbox' | 'reminder';
   title: string;
   onSelect: (path: string) => void;
 }
@@ -100,7 +100,11 @@ export default function DocumentList({ type, title, onSelect }: DocumentListProp
     }
   }, [selectedIndex]);
 
-  const statusOptions = type === 'task' ? ['active', 'blocked', 'paused', 'complete'] : [];
+  const statusOptions = type === 'task'
+    ? ['active', 'blocked', 'paused', 'complete']
+    : type === 'reminder'
+    ? ['pending', 'snoozed', 'ongoing', 'completed', 'dismissed']
+    : [];
 
   if (loading && documents.length === 0) {
     return (

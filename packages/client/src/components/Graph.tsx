@@ -99,6 +99,7 @@ export default function Graph({ onSelectDocument }: GraphProps) {
       task: colors.success,
       knowledge: colors.info,
       inbox: colors.warning,
+      reminder: '#ff6b6b', // Red/salmon for time-sensitive
       project: colors.primary,
       context: colors.secondary,
       tag: tagColor,
@@ -317,6 +318,10 @@ export default function Graph({ onSelectDocument }: GraphProps) {
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: 'var(--term-warning)' }} />
           <span style={{ color: 'var(--term-muted)' }}>Inbox</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#ff6b6b' }} />
+          <span style={{ color: 'var(--term-muted)' }}>Reminders</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: 'var(--term-primary)' }} />
