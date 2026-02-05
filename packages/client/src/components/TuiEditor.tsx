@@ -95,6 +95,16 @@ const TuiEditor: React.FC<TuiEditorProps> = ({
     }
   }, [fields.length, handleExit, handleSave]);
 
+  // Stop propagation for regular typing in inputs to prevent global shortcuts from capturing
+  const handleInputKeyDown = useCallback((e: React.KeyboardEvent) => {
+    // Let control keys propagate up for handling
+    if (e.ctrlKey || e.metaKey || e.key === 'Escape' || e.key === 'Tab') {
+      return;
+    }
+    // Stop all other keys from propagating (prevents global shortcuts like 't', 'q', '1-5')
+    e.stopPropagation();
+  }, []);
+
   return (
     <div
       className="h-full flex flex-col"
@@ -182,6 +192,7 @@ const TuiEditor: React.FC<TuiEditorProps> = ({
                 value={data[field.name]}
                 onChange={e => handleChange(field.name, e.target.value)}
                 onFocus={() => setActiveField(index)}
+                onKeyDown={handleInputKeyDown}
                 placeholder={field.placeholder}
                 className="w-full flex-1 p-3 font-mono text-sm resize-none outline-none touch-manipulation min-h-0"
                 style={{
@@ -200,6 +211,7 @@ const TuiEditor: React.FC<TuiEditorProps> = ({
                 value={data[field.name]}
                 onChange={e => handleChange(field.name, e.target.value)}
                 onFocus={() => setActiveField(index)}
+                onKeyDown={handleInputKeyDown}
                 placeholder={field.placeholder}
                 className="w-full p-3 font-mono text-sm outline-none touch-manipulation"
                 style={{

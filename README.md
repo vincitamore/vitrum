@@ -9,12 +9,25 @@ A lightweight, personal document viewer for [claude-org](https://github.com/vinc
 ## Features
 
 - **TUI Aesthetic**: Terminal-inspired design with 6 color themes
+- **Document Editing**: nano-style editor with `e` key, direct filesystem writes
 - **Document Views**: Dashboard, Tasks, Knowledge Base, Inbox, Graph
 - **Live Reload**: File changes update the UI in real-time
 - **PWA Support**: Install on mobile for native-like experience
 - **Keyboard Navigation**: vim-style `j/k` navigation, number keys for views
 - **Graph Visualization**: D3-powered document relationship graph
 - **Search**: Full-text search with fuzzy matching
+
+### Document Editing
+
+Edit documents directly in the viewer with `e` key or click the Edit button:
+
+![Editor](screenshots/org-viewer-editor.png)
+
+- **nano-style interface** with keyboard shortcuts
+- **Ctrl+S** to save, **Ctrl+X** or **Escape** to exit
+- **Tab** to navigate between fields
+- Touch-friendly buttons for mobile use
+- Changes write directly to filesystem and trigger live reload
 
 ### Graph View
 
@@ -73,6 +86,7 @@ org-viewer/
 |----------|-------------|
 | `GET /api/files` | List all documents |
 | `GET /api/files/:path` | Get single document |
+| `PUT /api/files/:path` | Update document (frontmatter + content) |
 | `GET /api/search?q=...` | Search documents |
 | `GET /api/graph` | Get D3 graph data |
 | `GET /api/status` | Server/index stats |
@@ -98,6 +112,7 @@ Environment variables:
 
 ## Keyboard Shortcuts
 
+### Navigation
 | Key | Action |
 |-----|--------|
 | `1-5` | Switch views |
@@ -106,6 +121,14 @@ Environment variables:
 | `k` / `↑` | Previous item |
 | `Enter` | Open selected |
 | `t` | Toggle theme picker |
+
+### Editor (when editing)
+| Key | Action |
+|-----|--------|
+| `Ctrl+S` | Save changes |
+| `Ctrl+X` / `Esc` | Exit editor |
+| `Tab` | Next field |
+| `Shift+Tab` | Previous field |
 
 ## Native App (Tauri)
 

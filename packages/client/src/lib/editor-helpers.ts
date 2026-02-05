@@ -55,7 +55,10 @@ export function documentToEditorData(doc: OrgDocument): EditorData {
   let title = doc.title;
   let bodyContent = doc.content || '';
 
-  // If content starts with # heading matching title, extract it
+  // Strip frontmatter if present (API may return content with frontmatter)
+  bodyContent = bodyContent.replace(/^---[\s\S]*?---\n?/, '');
+
+  // If content starts with # heading, extract it as title
   const lines = bodyContent.split('\n');
   if (lines[0]?.startsWith('# ')) {
     title = lines[0].substring(2).trim();

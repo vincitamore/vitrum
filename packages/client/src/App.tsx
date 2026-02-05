@@ -83,8 +83,12 @@ function App() {
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Skip all global shortcuts when typing in form fields
+      const isTyping = document.activeElement?.tagName === 'INPUT' ||
+                       document.activeElement?.tagName === 'TEXTAREA';
+
       // Theme picker
-      if (e.key === 't' && !e.ctrlKey && !e.metaKey && document.activeElement?.tagName !== 'INPUT') {
+      if (e.key === 't' && !e.ctrlKey && !e.metaKey && !isTyping) {
         e.preventDefault();
         setShowThemePicker(p => !p);
         return;
@@ -97,7 +101,8 @@ function App() {
         return;
       }
 
-      if (e.key === 'Escape' || e.key === 'q') {
+      // Only handle escape/q when not typing
+      if ((e.key === 'Escape' || e.key === 'q') && !isTyping) {
         e.preventDefault();
         if (selectedPath) {
           setSelectedPath(null);
@@ -107,7 +112,7 @@ function App() {
         }
       }
 
-      if (!selectedPath && document.activeElement?.tagName !== 'INPUT') {
+      if (!selectedPath && !isTyping) {
         if (e.key === '1') { e.preventDefault(); setView('dashboard'); }
         if (e.key === '2') { e.preventDefault(); setView('tasks'); }
         if (e.key === '3') { e.preventDefault(); setView('knowledge'); }
