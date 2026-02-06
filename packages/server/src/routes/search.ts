@@ -14,9 +14,15 @@ export function createSearchRoutes(index: DocumentIndex) {
 
     const type = c.req.query('type');
     const tag = c.req.query('tag');
+    const folder = c.req.query('folder');
     const limit = parseInt(c.req.query('limit') || '20');
 
-    const results = index.search(query, { type, tag });
+    let results = index.search(query, { type, tag });
+
+    // Filter by folder if specified
+    if (folder) {
+      results = results.filter(r => r.item.path.startsWith(folder));
+    }
 
     // Transform results for API response
     const items = results.slice(0, limit).map(r => ({

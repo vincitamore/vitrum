@@ -10,12 +10,14 @@ import Graph from './components/Graph';
 import CodeView from './components/CodeView';
 import ThemePicker from './components/ThemePicker';
 import TitleBar from './components/TitleBar';
+import PeersView from './components/PeersView';
+import PeerDocumentView from './components/PeerDocumentView';
 
 // Check if running in Tauri
 const isTauri = typeof window !== 'undefined' && '__TAURI__' in window;
 
-type View = 'dashboard' | 'tasks' | 'knowledge' | 'inbox' | 'reminders' | 'graph' | 'code';
-type ViewWithDocument = View | 'document';
+type View = 'dashboard' | 'tasks' | 'knowledge' | 'inbox' | 'reminders' | 'graph' | 'code' | 'peers';
+type ViewWithDocument = View | 'document' | 'peer-document';
 
 function App() {
   const [view, setView] = useState<ViewWithDocument>('dashboard');
@@ -26,6 +28,7 @@ function App() {
   const [serverStarting, setServerStarting] = useState(isTauri);
   const [error, setError] = useState<string | null>(null);
   const [showThemePicker, setShowThemePicker] = useState(false);
+  const [peerDocTarget, setPeerDocTarget] = useState<{ host: string; path: string } | null>(null);
   const { themeName } = useTheme();
   const retryIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -107,7 +110,10 @@ function App() {
       // Only handle escape/q when not typing
       if ((e.key === 'Escape' || e.key === 'q') && !isTyping) {
         e.preventDefault();
-        if (selectedPath) {
+        if (peerDocTarget) {
+          setPeerDocTarget(null);
+          setView(previousView);
+        } else if (selectedPath) {
           setSelectedPath(null);
           setView(previousView);
         } else if (view !== 'dashboard') {
@@ -115,7 +121,7 @@ function App() {
         }
       }
 
-      if (!selectedPath && !isTyping) {
+      if (!selectedPath && !peerDocTarget && !isTyping) {
         if (e.key === '1') { e.preventDefault(); setView('dashboard'); }
         if (e.key === '2') { e.preventDefault(); setView('tasks'); }
         if (e.key === '3') { e.preventDefault(); setView('knowledge'); }
@@ -123,19 +129,28 @@ function App() {
         if (e.key === '5') { e.preventDefault(); setView('reminders'); }
         if (e.key === '6') { e.preventDefault(); setView('graph'); }
         if (e.key === '7') { e.preventDefault(); setView('code'); }
+        if (e.key === '8') { e.preventDefault(); setView('peers'); }
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [view, selectedPath, previousView, showThemePicker]);
+  }, [view, selectedPath, peerDocTarget, previousView, showThemePicker]);
 
   const handleSelectDocument = (path: string) => {
-    if (view !== 'document') {
+    if (view !== 'document' && view !== 'peer-document') {
       setPreviousView(view);
     }
     setSelectedPath(path);
     setView('document');
+  };
+
+  const handleSelectPeerDocument = (peerHost: string, path: string) => {
+    if (view !== 'peer-document' && view !== 'document') {
+      setPreviousView(view);
+    }
+    setPeerDocTarget({ host: peerHost, path });
+    setView('peer-document');
   };
 
   if (loading || serverStarting) {
@@ -192,10 +207,11 @@ function App() {
               { key: '5', label: 'Reminders', view: 'reminders' as View },
               { key: '6', label: 'Graph', view: 'graph' as View },
               { key: '7', label: 'Code', view: 'code' as View },
+              { key: '8', label: 'Peers', view: 'peers' as View },
             ].map((item) => (
               <button
                 key={item.key}
-                onClick={() => { setSelectedPath(null); setView(item.view); }}
+                onClick={() => { setSelectedPath(null); setPeerDocTarget(null); setView(item.view); }}
                 className="px-3 py-1 text-sm border"
                 style={{
                   borderColor: (view === item.view || (view === 'document' && previousView === item.view))
@@ -244,7 +260,22 @@ function App() {
       {/* Content */}
       <main className="flex-1 min-h-0 flex flex-col">
         <AnimatePresence mode="wait">
-          {selectedPath ? (
+          {peerDocTarget ? (
+            <motion.div
+              key="peer-document"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.15 }}
+              className="flex-1 min-h-0"
+            >
+              <PeerDocumentView
+                peerHost={peerDocTarget.host}
+                path={peerDocTarget.path}
+                onBack={() => { setPeerDocTarget(null); setView(previousView); }}
+              />
+            </motion.div>
+          ) : selectedPath ? (
             <motion.div
               key="document"
               initial={{ opacity: 0, x: 20 }}
@@ -305,6 +336,9 @@ function App() {
               {view === 'reminders' && (
                 <DocumentList type="reminder" title="Reminders" onSelect={handleSelectDocument} />
               )}
+              {view === 'peers' && (
+                <PeersView onSelectPeerDocument={handleSelectPeerDocument} />
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -323,10 +357,11 @@ function App() {
           { key: '5', label: 'Rem', view: 'reminders' as View },
           { key: '6', label: 'Graph', view: 'graph' as View },
           { key: '7', label: '</>', view: 'code' as View },
+          { key: '8', label: 'Peers', view: 'peers' as View },
         ].map((item) => (
           <button
             key={item.key}
-            onClick={() => { setSelectedPath(null); setView(item.view); }}
+            onClick={() => { setSelectedPath(null); setPeerDocTarget(null); setView(item.view); }}
             className="px-3 py-1 text-sm"
             style={{
               color: (view === item.view || (view === 'document' && previousView === item.view))

@@ -3,3 +3,4 @@ export { createSearchRoutes } from './search';
 export { createGraphRoutes } from './graph';
 export { createStatusRoutes } from './status';
 export { createPublishRoutes } from './publish';
+export { createFederationRoutes } from './federation';

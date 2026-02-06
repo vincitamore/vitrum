@@ -4,6 +4,7 @@
 
 type ReloadCallback = () => void;
 type UpdateCallback = (path: string) => void;
+type MessageCallback = (message: { type: string; path?: string; peer?: string; host?: string; timestamp?: number; [key: string]: unknown }) => void;
 
 class LiveReloadClient {
   private ws: WebSocket | null = null;
@@ -11,6 +12,7 @@ class LiveReloadClient {
   private onReloadCallbacks: ReloadCallback[] = [];
   private onUpdateCallbacks: UpdateCallback[] = [];
   private onRemoveCallbacks: UpdateCallback[] = [];
+  private onMessageCallbacks: MessageCallback[] = [];
 
   connect() {
     if (this.ws?.readyState === WebSocket.OPEN) return;
@@ -68,7 +70,10 @@ class LiveReloadClient {
     }, 3000);
   }
 
-  private handleMessage(message: { type: string; path?: string }) {
+  private handleMessage(message: { type: string; path?: string; [key: string]: unknown }) {
+    // Notify raw message listeners first
+    this.onMessageCallbacks.forEach(cb => cb(message));
+
     switch (message.type) {
       case 'reload':
         this.onReloadCallbacks.forEach(cb => cb());
@@ -104,6 +109,13 @@ class LiveReloadClient {
     this.onRemoveCallbacks.push(callback);
     return () => {
       this.onRemoveCallbacks = this.onRemoveCallbacks.filter(cb => cb !== callback);
+    };
+  }
+
+  onMessage(callback: MessageCallback) {
+    this.onMessageCallbacks.push(callback);
+    return () => {
+      this.onMessageCallbacks = this.onMessageCallbacks.filter(cb => cb !== callback);
     };
   }
 }

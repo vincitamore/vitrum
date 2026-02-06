@@ -214,6 +214,40 @@ async function fetchWithMethod<T>(path: string, method: string): Promise<T> {
   return response.json();
 }
 
+async function postJSON<T>(path: string, body: unknown): Promise<T> {
+  logSync(`postJSON called for path: ${path}`);
+
+  const tFetch = await getTauriFetch();
+
+  if (tFetch) {
+    const url = `${SERVER_URL}/api${path}`;
+    const response = await tFetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  const url = `/api${path}`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`);
+  }
+
+  return response.json();
+}
+
 async function putJSON<T>(path: string, body: unknown): Promise<T> {
   logSync(`putJSON called for path: ${path}`);
 
@@ -353,5 +387,157 @@ export interface ProjectFile {
   language: string | null;
   size: number;
 }
+
+// --- Federation Types ---
+
+export interface PeerLiveStatus {
+  name: string;
+  host: string;
+  port: number;
+  protocol: string;
+  status: 'online' | 'offline' | 'unknown';
+  instanceId?: string;
+  displayName?: string;
+  sharedFolders?: string[];
+  sharedTags?: string[];
+  documentCount?: number;
+  lastSeen?: string;
+  latencyMs?: number;
+  consecutiveFailures: number;
+}
+
+export interface FederationPeersResponse {
+  self: {
+    instanceId: string;
+    displayName: string;
+    host: string;
+    port: number;
+  };
+  peers: PeerLiveStatus[];
+}
+
+export interface CrossOrgSearchResult {
+  peer: string;
+  peerId: string;
+  peerHost: string;
+  path: string;
+  title: string;
+  type: string;
+  tags: string[];
+  score: number;
+  snippet: string;
+}
+
+export interface CrossOrgSearchResponse {
+  query: string;
+  results: CrossOrgSearchResult[];
+  totalPeersQueried: number;
+  totalPeersResponded: number;
+  peerResults: Record<string, { count: number; took: number }>;
+}
+
+export interface PeerFileListItem {
+  path: string;
+  title: string;
+  type: string;
+  tags: string[];
+  created?: string;
+  updated?: string;
+  excerpt?: string;
+}
+
+export interface PeerFileListResponse {
+  instanceId: string;
+  displayName: string;
+  count: number;
+  items: PeerFileListItem[];
+}
+
+export interface PeerDocument {
+  path: string;
+  title: string;
+  type: string;
+  tags: string[];
+  content: string;
+  frontmatter: Record<string, unknown>;
+  created?: string;
+  updated?: string;
+  links: string[];
+  backlinks: string[];
+  checksum: string;
+}
+
+export interface FederationMetaClient {
+  'origin-peer': string;
+  'origin-name': string;
+  'origin-host': string;
+  'origin-path': string;
+  'adopted-at': string;
+  'origin-checksum': string;
+  'local-checksum': string;
+  'sync-status': 'synced' | 'local-modified' | 'origin-modified' | 'conflict' | 'rejected';
+  'last-sync-check': string;
+}
+
+export interface SharedDocumentItem {
+  localPath: string;
+  title: string;
+  type: string;
+  tags: string[];
+  federation: FederationMetaClient;
+}
+
+export interface SharedDocumentsResponse {
+  count: number;
+  items: SharedDocumentItem[];
+}
+
+// --- Federation API ---
+
+export const federationApi = {
+  async getPeers(): Promise<FederationPeersResponse> {
+    return fetchJSON('/federation/peers');
+  },
+
+  async crossSearch(query: string, filters?: { type?: string; tag?: string; limit?: number }): Promise<CrossOrgSearchResponse> {
+    const params = new URLSearchParams({ q: query });
+    if (filters?.type) params.set('type', filters.type);
+    if (filters?.tag) params.set('tag', filters.tag);
+    if (filters?.limit) params.set('limit', String(filters.limit));
+    return fetchJSON(`/federation/cross-search?${params}`);
+  },
+
+  async browsePeerFiles(peerHost: string, filters?: { folder?: string; tag?: string }): Promise<PeerFileListResponse> {
+    const params = new URLSearchParams({ peer: peerHost });
+    if (filters?.folder) params.set('folder', filters.folder);
+    if (filters?.tag) params.set('tag', filters.tag);
+    return fetchJSON(`/federation/cross-files?${params}`);
+  },
+
+  async getPeerDocument(peerHost: string, path: string): Promise<PeerDocument> {
+    return fetchJSON(`/federation/cross-file/${path}?peer=${encodeURIComponent(peerHost)}`);
+  },
+
+  async adoptDocument(params: {
+    peerId: string;
+    peerHost: string;
+    sourcePath: string;
+    targetPath?: string;
+  }): Promise<{ success: boolean; localPath: string; checksum: string }> {
+    return postJSON('/federation/adopt', params);
+  },
+
+  async sendDocument(params: {
+    peerHost: string;
+    sourcePath: string;
+    message?: string;
+  }): Promise<{ success: boolean; sentTo: string }> {
+    return postJSON('/federation/send', params);
+  },
+
+  async getSharedDocuments(): Promise<SharedDocumentsResponse> {
+    return fetchJSON('/federation/shared');
+  },
+};
 
 logSync('api.ts fully loaded');

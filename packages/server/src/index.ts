@@ -6,12 +6,15 @@ import { serveStatic } from 'hono/bun';
 import { DocumentIndex } from './services/index';
 import { FileWatcher } from './services/watcher';
 import { LiveReloadServer } from './ws/reload';
+import { PeerRegistry } from './services/peers';
+import { SyncService } from './services/sync';
 import {
   createFilesRoutes,
   createSearchRoutes,
   createGraphRoutes,
   createStatusRoutes,
   createPublishRoutes,
+  createFederationRoutes,
 } from './routes';
 
 // Configuration
@@ -24,6 +27,11 @@ const startTime = new Date();
 const index = new DocumentIndex(ORG_ROOT);
 const watcher = new FileWatcher(ORG_ROOT, index);
 const reloadServer = new LiveReloadServer();
+const peerRegistry = new PeerRegistry(ORG_ROOT);
+const syncService = new SyncService(ORG_ROOT, index, peerRegistry);
+
+// Track local host info for federation
+let localHost: { host: string; port: number } | null = null;
 
 // Create Hono app
 const app = new Hono();
@@ -44,6 +52,7 @@ app.route('/api/search', createSearchRoutes(index));
 app.route('/api/graph', createGraphRoutes(index));
 app.route('/api/status', createStatusRoutes(index, reloadServer, startTime));
 app.route('/api/publish', createPublishRoutes(index, ORG_ROOT));
+app.route('/api/federation', createFederationRoutes(index, peerRegistry, startTime, () => localHost, syncService));
 
 // Health check
 app.get('/api/health', (c) =>
@@ -101,12 +110,28 @@ async function main() {
     },
   });
 
+  localHost = { host: 'localhost', port: PORT };
+
+  // Start peer discovery polling
+  peerRegistry.onPeerStatusChange((peer) => {
+    console.log(`Peer ${peer.name} (${peer.host}): ${peer.status}`);
+    reloadServer.broadcast({
+      type: peer.status === 'online' ? 'peer-online' : 'peer-offline',
+      peer: peer.name,
+      host: peer.host,
+      timestamp: Date.now(),
+    });
+  });
+  peerRegistry.startPolling();
+
   console.log(`Server running at http://localhost:${PORT}`);
   console.log(`WebSocket available at ws://localhost:${PORT}/ws`);
+  console.log(`Federation: ${peerRegistry.getPeers().length} peers configured`);
 
   // Handle shutdown
   process.on('SIGINT', () => {
     console.log('\nShutting down...');
+    peerRegistry.stopPolling();
     watcher.stop();
     server.stop();
     process.exit(0);

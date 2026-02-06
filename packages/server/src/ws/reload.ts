@@ -1,8 +1,10 @@
 import type { ServerWebSocket } from 'bun';
 
 export interface ReloadMessage {
-  type: 'reload' | 'update' | 'remove';
+  type: 'reload' | 'update' | 'remove' | 'peer-online' | 'peer-offline' | 'peer-document-received' | 'sync-status-changed';
   path?: string;
+  peer?: string;
+  host?: string;
   timestamp: number;
 }
 
