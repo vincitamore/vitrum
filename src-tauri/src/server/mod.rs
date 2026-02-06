@@ -1,8 +1,11 @@
 pub mod document;
+pub mod federation;
 pub mod index;
+pub mod peers;
 pub mod projects;
 pub mod routes;
 pub mod static_files;
+pub mod sync;
 pub mod watcher;
 
 use axum::{
@@ -25,6 +28,8 @@ use tokio::sync::{broadcast, RwLock};
 use tower_http::cors::{Any, CorsLayer};
 
 use index::DocumentIndex;
+use peers::PeerRegistry;
+use sync::SyncService;
 use watcher::FileWatcher;
 
 pub fn log_to_file(msg: &str) {
@@ -44,6 +49,14 @@ pub struct AppState {
     pub org_root: PathBuf,
     pub start_time: std::time::Instant,
     pub ws_tx: broadcast::Sender<String>,
+}
+
+/// Federation state wraps AppState + federation-specific services
+pub struct FederationState {
+    pub app_state: Arc<AppState>,
+    pub peer_registry: Arc<PeerRegistry>,
+    pub sync_service: Arc<SyncService>,
+    pub local_host: RwLock<Option<(String, u16)>>,
 }
 
 /// WebSocket upgrade handler
@@ -123,27 +136,81 @@ pub async fn start_server(org_root: PathBuf, port: u16) -> Result<(), Box<dyn st
     // Create broadcast channel for WebSocket live reload
     let (ws_tx, _) = broadcast::channel::<String>(64);
 
-    let state = Arc::new(AppState {
+    let app_state = Arc::new(AppState {
         index: Arc::new(RwLock::new(index)),
         org_root: org_root.clone(),
         start_time,
         ws_tx,
     });
 
-    // Start file watcher
+    // Initialize federation services
+    log_to_file("Initializing federation services...");
+    let peer_registry = Arc::new(PeerRegistry::new(&org_root));
+    let sync_service = Arc::new(SyncService::new(
+        &org_root,
+        Arc::clone(&app_state.index),
+        Arc::clone(&peer_registry),
+    ));
+
+    let fed_state = Arc::new(FederationState {
+        app_state: Arc::clone(&app_state),
+        peer_registry: Arc::clone(&peer_registry),
+        sync_service: Arc::clone(&sync_service),
+        local_host: RwLock::new(None),
+    });
+
+    // Set local host info
+    sync_service.set_local_host("localhost".to_string(), port).await;
+    *fed_state.local_host.write().await = Some(("localhost".to_string(), port));
+
+    // Start file watcher with sync integration
     log_to_file("Starting file watcher...");
-    let watcher_state = state.clone();
+    let watcher_state = Arc::clone(&app_state);
+    let watcher_sync = Arc::clone(&sync_service);
     tokio::spawn(async move {
-        if let Err(e) = FileWatcher::watch(watcher_state).await {
+        if let Err(e) = FileWatcher::watch_with_sync(watcher_state, watcher_sync).await {
             log_to_file(&format!("File watcher error: {}", e));
         }
     });
+
+    // Start peer discovery polling
+    let peer_count = peer_registry.get_peers().await.len();
+    log_to_file(&format!("Starting peer polling ({} peers configured)...", peer_count));
+    peer_registry.start_polling();
+
+    // Start sync polling for adopted documents
+    let shared_count = sync_service.get_shared_documents().await.len();
+    log_to_file(&format!("Starting sync polling ({} adopted documents)...", shared_count));
+
+    // Set up sync status callback to broadcast via WebSocket
+    let ws_tx_for_sync = app_state.ws_tx.clone();
+    sync_service.on_status_change(Box::new(move |event| {
+        log_to_file(&format!(
+            "Sync: {} {} → {}{}",
+            event.path,
+            event.old_status,
+            event.new_status,
+            event.peer.as_ref().map(|p| format!(" ({})", p)).unwrap_or_default()
+        ));
+        let msg = serde_json::json!({
+            "type": "sync-status-changed",
+            "path": event.path,
+            "peer": event.peer,
+            "timestamp": event.timestamp,
+        });
+        let _ = ws_tx_for_sync.send(msg.to_string());
+    })).await;
+
+    sync_service.start_sync_polling();
 
     // CORS configuration
     let cors = CorsLayer::new()
         .allow_origin(Any)
         .allow_methods(Any)
         .allow_headers(Any);
+
+    // Build federation sub-router with its own state
+    let fed_router = federation::create_federation_routes().with_state(Arc::clone(&fed_state));
 
     // Build router — API routes first, then static file fallback
     let app = Router::new()
@@ -158,12 +225,16 @@ pub async fn start_server(org_root: PathBuf, port: u16) -> Result<(), Box<dyn st
         .route("/api/projects/{name}/file/{*path}", get(projects::get_file).put(projects::put_file))
         .route("/api/debug-log", post(routes::debug_log))
         .route("/ws", get(ws_handler))
-        // Static file serving (embedded client dist) — enables remote/Tailscale access
+        // Federation routes (nested with their own state)
+        .nest("/api/federation", fed_router)
+        // Static file serving (embedded client dist)
         .fallback(static_files::static_handler)
         .layer(cors)
-        .with_state(state);
+        .with_state(app_state);
 
     log_to_file("File watcher spawned, now binding server...");
+    log_to_file(&format!("Federation: {} peers configured", peer_count));
+    log_to_file(&format!("Sync: watching {} adopted document(s)", shared_count));
 
     // Check for TLS certificates (for Tailscale HTTPS access)
     let tls_cert = env::var("ORG_VIEWER_TLS_CERT").ok();
@@ -201,7 +272,6 @@ pub async fn start_server(org_root: PathBuf, port: u16) -> Result<(), Box<dyn st
             });
 
             // HTTPS listener on 0.0.0.0 (for Tailscale/remote access)
-            // Use port+1 to avoid conflict with the localhost HTTP listener
             let tls_port = port + 1;
             let tls_addr = SocketAddr::from(([0, 0, 0, 0], tls_port));
             log_to_file(&format!("SUCCESS: HTTPS listener on https://0.0.0.0:{} (Tailscale)", tls_port));
