@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { api, type ServerStatus } from './lib/api';
+import { api, federationApi, type ServerStatus } from './lib/api';
 import { liveReload } from './lib/websocket';
 import { useTheme } from './lib/theme';
 import Dashboard from './components/Dashboard';
@@ -12,11 +12,12 @@ import ThemePicker from './components/ThemePicker';
 import TitleBar from './components/TitleBar';
 import PeersView from './components/PeersView';
 import PeerDocumentView from './components/PeerDocumentView';
+import SharedDocsView from './components/SharedDocsView';
 
 // Check if running in Tauri
 const isTauri = typeof window !== 'undefined' && '__TAURI__' in window;
 
-type View = 'dashboard' | 'tasks' | 'knowledge' | 'inbox' | 'reminders' | 'graph' | 'code' | 'peers';
+type View = 'dashboard' | 'tasks' | 'knowledge' | 'inbox' | 'reminders' | 'graph' | 'code' | 'peers' | 'shared';
 type ViewWithDocument = View | 'document' | 'peer-document';
 
 function App() {
@@ -29,8 +30,21 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [peerDocTarget, setPeerDocTarget] = useState<{ host: string; path: string } | null>(null);
+  const [syncConflictCount, setSyncConflictCount] = useState(0);
   const { themeName } = useTheme();
   const retryIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const fetchSyncCount = useCallback(async () => {
+    try {
+      const shared = await federationApi.getSharedDocuments();
+      const conflicts = shared.items.filter(
+        (d) => d.federation['sync-status'] === 'conflict' || d.federation['sync-status'] === 'origin-modified'
+      );
+      setSyncConflictCount(conflicts.length);
+    } catch {
+      // Federation may not be configured
+    }
+  }, []);
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -44,6 +58,8 @@ function App() {
         clearInterval(retryIntervalRef.current);
         retryIntervalRef.current = null;
       }
+      // Also fetch sync conflict count
+      fetchSyncCount();
     } catch (err) {
       // If server is starting (in Tauri), keep retrying silently
       if (serverStarting) {
@@ -53,7 +69,7 @@ function App() {
     } finally {
       setLoading(false);
     }
-  }, [serverStarting]);
+  }, [serverStarting, fetchSyncCount]);
 
   // Poll for server availability when running in Tauri
   useEffect(() => {
@@ -79,11 +95,19 @@ function App() {
       fetchStatus();
     });
 
+    // Listen for sync status changes to update badge
+    const unsubSync = liveReload.onMessage((msg) => {
+      if (msg.type === 'sync-status-changed') {
+        fetchSyncCount();
+      }
+    });
+
     return () => {
       unsubReload();
+      unsubSync();
       liveReload.disconnect();
     };
-  }, [fetchStatus]);
+  }, [fetchStatus, fetchSyncCount]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -130,6 +154,7 @@ function App() {
         if (e.key === '6') { e.preventDefault(); setView('graph'); }
         if (e.key === '7') { e.preventDefault(); setView('code'); }
         if (e.key === '8') { e.preventDefault(); setView('peers'); }
+        if (e.key === '9') { e.preventDefault(); setView('shared'); }
       }
     };
 
@@ -208,11 +233,12 @@ function App() {
               { key: '6', label: 'Graph', view: 'graph' as View },
               { key: '7', label: 'Code', view: 'code' as View },
               { key: '8', label: 'Peers', view: 'peers' as View },
+              { key: '9', label: 'Shared', view: 'shared' as View },
             ].map((item) => (
               <button
                 key={item.key}
                 onClick={() => { setSelectedPath(null); setPeerDocTarget(null); setView(item.view); }}
-                className="px-3 py-1 text-sm border"
+                className="px-3 py-1 text-sm border relative"
                 style={{
                   borderColor: (view === item.view || (view === 'document' && previousView === item.view))
                     ? 'var(--term-primary)'
@@ -227,6 +253,19 @@ function App() {
               >
                 <span className="opacity-50 mr-1">{item.key}</span>
                 {item.label}
+                {item.view === 'shared' && syncConflictCount > 0 && (
+                  <span
+                    className="absolute -top-1 -right-1 text-xs px-1 min-w-[16px] text-center"
+                    style={{
+                      backgroundColor: 'var(--term-error)',
+                      color: 'var(--term-background)',
+                      fontSize: '10px',
+                      lineHeight: '16px',
+                    }}
+                  >
+                    {syncConflictCount}
+                  </span>
+                )}
               </button>
             ))}
           </nav>
@@ -339,6 +378,9 @@ function App() {
               {view === 'peers' && (
                 <PeersView onSelectPeerDocument={handleSelectPeerDocument} />
               )}
+              {view === 'shared' && (
+                <SharedDocsView onSelectDocument={handleSelectDocument} />
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -358,6 +400,7 @@ function App() {
           { key: '6', label: 'Graph', view: 'graph' as View },
           { key: '7', label: '</>', view: 'code' as View },
           { key: '8', label: 'Peers', view: 'peers' as View },
+          { key: '9', label: 'Sync', view: 'shared' as View },
         ].map((item) => (
           <button
             key={item.key}

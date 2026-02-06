@@ -32,6 +32,7 @@ const syncService = new SyncService(ORG_ROOT, index, peerRegistry);
 
 // Track local host info for federation
 let localHost: { host: string; port: number } | null = null;
+syncService.setLocalHostGetter(() => localHost);
 
 // Create Hono app
 const app = new Hono();
@@ -68,13 +69,15 @@ app.use('/*', serveStatic({ root: STATIC_DIR }));
 // Fallback to index.html for SPA routing
 app.get('*', serveStatic({ path: `${STATIC_DIR}/index.html` }));
 
-// Wire up file watcher to live reload
+// Wire up file watcher to live reload + sync detection
 watcher.onChange((event, path) => {
   console.log(`File ${event}: ${path}`);
   if (event === 'remove') {
     reloadServer.notifyRemove(path);
   } else {
     reloadServer.notifyChange(path);
+    // Check if this is a federation-tracked document
+    syncService.handleLocalChange(path);
   }
 });
 
@@ -124,13 +127,27 @@ async function main() {
   });
   peerRegistry.startPolling();
 
+  // Start sync polling for adopted documents (checks origins for changes)
+  syncService.onStatusChange((event) => {
+    console.log(`Sync: ${event.path} ${event.oldStatus} → ${event.newStatus}${event.peer ? ` (${event.peer})` : ''}`);
+    reloadServer.broadcast({
+      type: 'sync-status-changed',
+      path: event.path,
+      peer: event.peer,
+      timestamp: event.timestamp,
+    });
+  });
+  syncService.startSyncPolling();
+
   console.log(`Server running at http://localhost:${PORT}`);
   console.log(`WebSocket available at ws://localhost:${PORT}/ws`);
   console.log(`Federation: ${peerRegistry.getPeers().length} peers configured`);
+  console.log(`Sync: watching ${syncService.getSharedDocuments().length} adopted document(s)`);
 
   // Handle shutdown
   process.on('SIGINT', () => {
     console.log('\nShutting down...');
+    syncService.stopSyncPolling();
     peerRegistry.stopPolling();
     watcher.stop();
     server.stop();

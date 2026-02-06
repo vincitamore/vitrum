@@ -47,7 +47,7 @@ export class FileWatcher {
         if (filename.includes('node_modules') || filename.startsWith('.')) return;
 
         const fullPath = join(dir, filename);
-        const relativePath = relative(this.orgRoot, fullPath);
+        const relativePath = relative(this.orgRoot, fullPath).replace(/\\/g, '/');
 
         // Debounce rapid changes
         const existing = this.debounceTimers.get(fullPath);

@@ -492,6 +492,16 @@ export interface SharedDocumentsResponse {
   items: SharedDocumentItem[];
 }
 
+export interface ConflictDiffResponse {
+  localContent: string;
+  originContent: string;
+  baseContent: string;
+  localChecksum: string;
+  originChecksum: string;
+}
+
+export type ResolutionAction = 'accept-origin' | 'keep-local' | 'merge' | 'reject';
+
 // --- Federation API ---
 
 export const federationApi = {
@@ -537,6 +547,19 @@ export const federationApi = {
 
   async getSharedDocuments(): Promise<SharedDocumentsResponse> {
     return fetchJSON('/federation/shared');
+  },
+
+  async getConflictDiff(path: string): Promise<ConflictDiffResponse> {
+    return fetchJSON(`/federation/shared/diff?path=${encodeURIComponent(path)}`);
+  },
+
+  async resolveConflict(params: {
+    path: string;
+    action: ResolutionAction;
+    mergedContent?: string;
+    comment?: string;
+  }): Promise<{ success: boolean; path: string; action: string }> {
+    return postJSON('/federation/shared/resolve', params);
   },
 };
 

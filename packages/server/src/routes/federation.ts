@@ -495,6 +495,47 @@ export function createFederationRoutes(
     });
   });
 
+  // GET /api/federation/shared/diff?path=... - Get 3-way diff for conflict resolution (local only)
+  app.get('/shared/diff', async (c) => {
+    const path = c.req.query('path');
+    if (!path) {
+      return c.json({ error: 'Query parameter "path" required' }, 400);
+    }
+
+    const diff = await syncService.getConflictDiff(path);
+    if (!diff) {
+      return c.json({ error: 'Could not get diff — document not found or peer offline' }, 404);
+    }
+
+    return c.json(diff);
+  });
+
+  // POST /api/federation/shared/resolve - Resolve a sync conflict (local only)
+  app.post('/shared/resolve', async (c) => {
+    const body = await c.req.json();
+    const { path, action, mergedContent, comment } = body;
+
+    if (!path || !action) {
+      return c.json({ error: 'Missing path or action' }, 400);
+    }
+
+    const validActions = ['accept-origin', 'keep-local', 'merge', 'reject'];
+    if (!validActions.includes(action)) {
+      return c.json({ error: `Invalid action. Must be one of: ${validActions.join(', ')}` }, 400);
+    }
+
+    if (action === 'merge' && !mergedContent) {
+      return c.json({ error: 'mergedContent required for merge action' }, 400);
+    }
+
+    const success = await syncService.resolveConflict(path, action, mergedContent, comment);
+    if (!success) {
+      return c.json({ error: 'Resolution failed — document not found or not a federation doc' }, 500);
+    }
+
+    return c.json({ success: true, path, action });
+  });
+
   // POST /api/federation/shared/respond - Receive resolution response from adopter (peer-only)
   app.post('/shared/respond', async (c) => {
     const body = await c.req.json();
