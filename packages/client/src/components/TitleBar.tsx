@@ -104,19 +104,10 @@ export default function TitleBar() {
             color: 'var(--term-primary)',
             fontSize: '11px',
             fontWeight: 700,
-            letterSpacing: '0.05em',
+            letterSpacing: '0.08em',
           }}
         >
-          ORG
-        </span>
-        <span
-          style={{
-            color: 'var(--term-muted)',
-            fontSize: '11px',
-            opacity: 0.6,
-          }}
-        >
-          Viewer
+          VITRUM
         </span>
       </div>
 

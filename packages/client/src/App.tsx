@@ -182,7 +182,7 @@ function App() {
     return (
       <div className="h-full flex flex-col items-center justify-center gap-2">
         <div className="animate-pulse" style={{ color: 'var(--term-muted)' }}>
-          {serverStarting ? 'Starting server...' : 'Connecting to org server...'}
+          {serverStarting ? 'Starting server...' : 'Connecting to Vitrum...'}
         </div>
         {serverStarting && (
           <div className="text-sm" style={{ color: 'var(--term-muted)', opacity: 0.5 }}>
@@ -220,7 +220,7 @@ function App() {
       >
         <div className="flex items-center gap-4">
           <span style={{ color: 'var(--term-primary)' }} className="font-bold">
-            ORG
+            Materia
           </span>
           {/* Desktop nav buttons */}
           <nav className="hidden sm:flex items-center gap-1">

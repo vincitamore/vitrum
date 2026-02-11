@@ -1,5 +1,5 @@
 /**
- * API client for org-viewer server
+ * API client for Vitrum server
  *
  * DIAGNOSTIC VERSION - logs via Tauri IPC
  */
