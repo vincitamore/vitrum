@@ -2623,35 +2623,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d"
 
 [[package]]
-name = "org-viewer"
-version = "0.1.0"
-dependencies = [
- "axum",
- "axum-server",
- "chrono",
- "dirs 5.0.1",
- "futures",
- "fuzzy-matcher",
- "gray_matter",
- "mime_guess",
- "notify",
- "regex",
- "reqwest 0.12.28",
- "rust-embed",
- "rustls",
- "serde",
- "serde_json",
- "sha2",
- "tauri",
- "tauri-build",
- "tauri-plugin-http",
- "tokio",
- "tower-http",
- "uuid",
- "walkdir",
-]
-
-[[package]]
 name = "pango"
 version = "0.18.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4955,6 +4926,35 @@ name = "version_check"
 version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
+
+[[package]]
+name = "vitrum"
+version = "0.2.0"
+dependencies = [
+ "axum",
+ "axum-server",
+ "chrono",
+ "dirs 5.0.1",
+ "futures",
+ "fuzzy-matcher",
+ "gray_matter",
+ "mime_guess",
+ "notify",
+ "regex",
+ "reqwest 0.12.28",
+ "rust-embed",
+ "rustls",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-http",
+ "tokio",
+ "tower-http",
+ "uuid",
+ "walkdir",
+]
 
 [[package]]
 name = "vswhom"

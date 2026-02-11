@@ -163,22 +163,15 @@ pub async fn start_server(org_root: PathBuf, port: u16) -> Result<(), Box<dyn st
     sync_service.set_local_host("localhost".to_string(), port).await;
     *fed_state.local_host.write().await = Some(("localhost".to_string(), port));
 
-    // Start file watcher with sync integration
-    log_to_file("Starting file watcher...");
-    let watcher_state = Arc::clone(&app_state);
-    let watcher_sync = Arc::clone(&sync_service);
-    tokio::spawn(async move {
-        if let Err(e) = FileWatcher::watch_with_sync(watcher_state, watcher_sync).await {
-            log_to_file(&format!("File watcher error: {}", e));
-        }
-    });
-
     // Start peer discovery polling
     let peer_count = peer_registry.get_peers().await.len();
     log_to_file(&format!("Starting peer polling ({} peers configured)...", peer_count));
     peer_registry.start_polling();
 
-    // Start sync polling for adopted documents
+    // Count shared documents BEFORE spawning file watcher to avoid RwLock deadlock.
+    // The file watcher takes write locks on index for every file event, and
+    // get_shared_documents() needs a read lock — on a large repo, events flood in
+    // immediately and the write lock blocks the read lock indefinitely.
     let shared_count = sync_service.get_shared_documents().await.len();
     log_to_file(&format!("Starting sync polling ({} adopted documents)...", shared_count));
 
@@ -202,6 +195,17 @@ pub async fn start_server(org_root: PathBuf, port: u16) -> Result<(), Box<dyn st
     })).await;
 
     sync_service.start_sync_polling();
+
+    // Start file watcher LAST — it takes write locks on the index for every file
+    // event, so all setup that needs read locks must complete first.
+    log_to_file("Starting file watcher...");
+    let watcher_state = Arc::clone(&app_state);
+    let watcher_sync = Arc::clone(&sync_service);
+    tokio::spawn(async move {
+        if let Err(e) = FileWatcher::watch_with_sync(watcher_state, watcher_sync).await {
+            log_to_file(&format!("File watcher error: {}", e));
+        }
+    });
 
     // CORS configuration
     let cors = CorsLayer::new()
