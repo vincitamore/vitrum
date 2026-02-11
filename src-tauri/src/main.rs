@@ -137,9 +137,15 @@ fn main() {
         log_to_file(&format!("Failed to create data dir: {}", e));
     }
 
-    // Clear WebView cache on startup to ensure fresh state
-    // This prevents stale cached API responses
+    // Clear WebView cache on startup to ensure fresh embedded assets
+    // Tauri stores WebView2 data in TWO locations:
+    // 1. Our custom hash-based dir: AppData/Local/vitrum/<hash>/EBWebView
+    // 2. Tauri identifier-based dir: AppData/Local/<identifier>/EBWebView
     clear_webview_cache(&base_data_dir);
+    if let Some(local_data) = dirs::data_local_dir() {
+        let identifier_dir = local_data.join("build.amore.vitrum");
+        clear_webview_cache(&identifier_dir);
+    }
 
     // Set environment variable for Tauri to use custom data directory
     env::set_var("TAURI_DATA_DIRECTORY", &base_data_dir);
