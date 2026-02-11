@@ -35,10 +35,20 @@ fn serve_file(path: &str, data: &[u8]) -> Response<Body> {
         .first_or_octet_stream()
         .to_string();
 
+    // Tiered cache-control: index.html always revalidates (picks up new hashed asset refs),
+    // Vite-hashed assets are immutable, everything else gets a short cache.
+    let cache_control = if path.ends_with(".html") || path == "index.html" {
+        "no-cache" // Always revalidate — new hashed filenames in index.html
+    } else if path.starts_with("assets/") {
+        "public, max-age=31536000, immutable" // 1 year — Vite content-hashes filenames
+    } else {
+        "public, max-age=3600" // 1 hour — icons, manifest, service worker
+    };
+
     Response::builder()
         .status(StatusCode::OK)
         .header(header::CONTENT_TYPE, mime)
-        .header(header::CACHE_CONTROL, "public, max-age=3600")
+        .header(header::CACHE_CONTROL, cache_control)
         .body(Body::from(data.to_vec()))
         .unwrap()
 }

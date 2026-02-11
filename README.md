@@ -1,8 +1,8 @@
 # Org Viewer
 
-A lightweight, personal document viewer for [claude-org](https://github.com/vincitamore/claude-org-template) systems. Runs locally, accessible via Tailscale, installable as a PWA.
+A lightweight, personal document viewer for [materia](https://github.com/vincitamore/materia-template) systems. Runs locally, accessible via Tailscale, installable as a PWA.
 
-> **Note**: This viewer is designed specifically for the claude-org personal organization system. Get started with the [claude-org-template](https://github.com/vincitamore/claude-org-template).
+> **Note**: This viewer is designed specifically for the materia personal organization system. Get started with the [materia-template](https://github.com/vincitamore/materia-template).
 
 ![Dashboard](screenshots/org-viewer-dashboard.png)
 
@@ -173,7 +173,7 @@ Environment variables:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `PORT` | 3847 | Server port |
-| `ORG_ROOT` | `cwd` | Path to claude-org root |
+| `ORG_ROOT` | `cwd` | Path to materia root |
 | `STATIC_DIR` | `../client/dist` | Path to built client (standalone mode) |
 | `ORG_VIEWER_TLS_CERT` | *(none)* | Path to TLS certificate file (`.crt`) |
 | `ORG_VIEWER_TLS_KEY` | *(none)* | Path to TLS private key file (`.key`) |

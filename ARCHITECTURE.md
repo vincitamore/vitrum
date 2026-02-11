@@ -1,6 +1,6 @@
 # org-viewer Architecture
 
-> A native app + PWA for viewing claude-org documents over Tailscale.
+> A native app + PWA for viewing materia documents over Tailscale.
 
 ## Design Principles
 
@@ -400,7 +400,7 @@ export async function search(query: string, filters?: SearchFilters) {
 {
   "name": "Org Viewer",
   "short_name": "OrgView",
-  "description": "View claude-org documents anywhere",
+  "description": "View materia documents anywhere",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#1c1e26",
@@ -590,7 +590,7 @@ fn get_tailscale_hostname() -> Option<String> {
 fn get_org_root() -> String {
     // Return configured org root path
     std::env::var("ORG_ROOT")
-        .unwrap_or_else(|_| "C:\\Users\\AlexMoyer\\Documents\\claude-org".to_string())
+        .unwrap_or_else(|_| "C:\\Users\\AlexMoyer\\Documents\\materia".to_string())
 }
 ```
 
