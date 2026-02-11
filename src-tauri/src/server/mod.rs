@@ -250,42 +250,65 @@ pub async fn start_server(org_root: PathBuf, port: u16) -> Result<(), Box<dyn st
             log_to_file(&format!("TLS enabled: cert={}, key={}", cert_path, key_path));
 
             let config = match RustlsConfig::from_pem_file(cert_path, key_path).await {
-                Ok(c) => c,
+                Ok(c) => Some(c),
                 Err(e) => {
                     log_to_file(&format!("FAILED to load TLS certs: {}", e));
                     log_to_file("Hint: Run 'tailscale cert <your-hostname>' to generate certs");
-                    return Err(e.into());
+                    log_to_file("Falling back to HTTP-only mode");
+                    None
                 }
             };
 
-            // Spawn HTTP listener on localhost only (for Tauri WebView IPC)
-            let local_addr = SocketAddr::from(([127, 0, 0, 1], port));
-            let local_app = app.clone();
-            tokio::spawn(async move {
-                match tokio::net::TcpListener::bind(local_addr).await {
-                    Ok(listener) => {
-                        log_to_file(&format!("SUCCESS: HTTP listener on http://{} (WebView)", local_addr));
-                        if let Err(e) = axum::serve(listener, local_app).await {
-                            log_to_file(&format!("HTTP serve error: {}", e));
+            if let Some(tls_config) = config {
+                // Dual-listener: HTTP on localhost (WebView) + HTTPS on 0.0.0.0 (Tailscale)
+                let local_addr = SocketAddr::from(([127, 0, 0, 1], port));
+                let local_app = app.clone();
+                tokio::spawn(async move {
+                    match tokio::net::TcpListener::bind(local_addr).await {
+                        Ok(listener) => {
+                            log_to_file(&format!("SUCCESS: HTTP listener on http://{} (WebView)", local_addr));
+                            if let Err(e) = axum::serve(listener, local_app).await {
+                                log_to_file(&format!("HTTP serve error: {}", e));
+                            }
+                        }
+                        Err(e) => {
+                            log_to_file(&format!("FAILED to bind HTTP on {}: {}", local_addr, e));
                         }
                     }
-                    Err(e) => {
-                        log_to_file(&format!("FAILED to bind HTTP on {}: {}", local_addr, e));
-                    }
+                });
+
+                let tls_port = port + 1;
+                let tls_addr = SocketAddr::from(([0, 0, 0, 0], tls_port));
+                log_to_file(&format!("SUCCESS: HTTPS listener on https://0.0.0.0:{} (Tailscale)", tls_port));
+
+                if let Err(e) = axum_server::bind_rustls(tls_addr, tls_config)
+                    .serve(app.into_make_service())
+                    .await
+                {
+                    log_to_file(&format!("Axum TLS serve error: {}", e));
+                    return Err(e.into());
                 }
-            });
+            } else {
+                // TLS certs failed to load — fall through to HTTP-only
+                let addr = SocketAddr::from(([0, 0, 0, 0], port));
+                log_to_file(&format!("Attempting to bind to http://{}", addr));
 
-            // HTTPS listener on 0.0.0.0 (for Tailscale/remote access)
-            let tls_port = port + 1;
-            let tls_addr = SocketAddr::from(([0, 0, 0, 0], tls_port));
-            log_to_file(&format!("SUCCESS: HTTPS listener on https://0.0.0.0:{} (Tailscale)", tls_port));
+                let listener = match tokio::net::TcpListener::bind(addr).await {
+                    Ok(l) => {
+                        log_to_file(&format!("SUCCESS: Server listening on http://{}", addr));
+                        l
+                    }
+                    Err(e) => {
+                        log_to_file(&format!("FAILED to bind: {}", e));
+                        return Err(e.into());
+                    }
+                };
 
-            if let Err(e) = axum_server::bind_rustls(tls_addr, config)
-                .serve(app.into_make_service())
-                .await
-            {
-                log_to_file(&format!("Axum TLS serve error: {}", e));
-                return Err(e.into());
+                log_to_file("Starting axum serve loop...");
+                if let Err(e) = axum::serve(listener, app).await {
+                    log_to_file(&format!("Axum serve error: {}", e));
+                    return Err(e.into());
+                }
             }
         }
         _ => {
