@@ -1,7 +1,7 @@
 {
   "$schema": "https://schemas.tauri.app/config/2/capability",
   "identifier": "default",
-  "description": "Default capabilities for org-viewer",
+  "description": "Default capabilities for vitrum",
   "windows": ["main"],
   "permissions": [
     "core:default",

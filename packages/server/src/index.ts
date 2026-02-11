@@ -83,7 +83,7 @@ watcher.onChange((event, path) => {
 
 // Start server
 async function main() {
-  console.log(`Org Viewer Server starting...`);
+  console.log(`Vitrum Server starting...`);
   console.log(`  ORG_ROOT: ${ORG_ROOT}`);
   console.log(`  PORT: ${PORT}`);
 

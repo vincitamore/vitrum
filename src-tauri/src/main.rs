@@ -54,7 +54,7 @@ fn get_org_root() -> String {
 
 // Simple file logger
 fn log_to_file(msg: &str) {
-    let log_path = env::temp_dir().join("org-viewer.log");
+    let log_path = env::temp_dir().join("vitrum.log");
     if let Ok(mut file) = OpenOptions::new()
         .create(true)
         .append(true)
@@ -89,7 +89,7 @@ fn clear_webview_cache(cache_dir: &PathBuf) {
 
 fn main() {
     // Clear log file on start
-    let log_path = env::temp_dir().join("org-viewer.log");
+    let log_path = env::temp_dir().join("vitrum.log");
     let _ = std::fs::write(&log_path, "");
 
     // Set up panic hook to log panics
@@ -105,7 +105,7 @@ fn main() {
         }
     }));
 
-    log_to_file("=== Org Viewer Starting ===");
+    log_to_file("=== Vitrum Starting ===");
     log_to_file(&format!("Log file: {:?}", log_path));
     log_to_file(&format!("Args: {:?}", env::args().collect::<Vec<_>>()));
     log_to_file(&format!("CWD: {:?}", env::current_dir()));
@@ -127,7 +127,7 @@ fn main() {
     // This isolates WebView cache per org folder
     let base_data_dir = dirs::data_local_dir()
         .unwrap_or_else(|| PathBuf::from("."))
-        .join("org-viewer")
+        .join("vitrum")
         .join(&path_hash);
 
     log_to_file(&format!("Data directory: {:?}", base_data_dir));

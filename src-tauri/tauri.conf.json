@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Org Viewer",
-  "version": "0.1.0",
-  "identifier": "build.amore.org-viewer",
+  "productName": "Vitrum",
+  "version": "0.2.0",
+  "identifier": "build.amore.vitrum",
   "build": {
     "beforeDevCommand": "pnpm dev:client",
     "devUrl": "http://localhost:5173",
@@ -13,7 +13,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "Org Viewer",
+        "title": "Vitrum",
         "width": 1200,
         "height": 800,
         "minWidth": 400,

@@ -5,9 +5,9 @@ import FileTree from './FileTree';
 import CodeEditor from './CodeEditor';
 
 const STORAGE_KEYS = {
-  lastProject: 'org-viewer-code-last-project',
-  sidebarWidth: 'org-viewer-code-sidebar-width',
-  sidebarCollapsed: 'org-viewer-code-sidebar-collapsed',
+  lastProject: 'vitrum-code-last-project',
+  sidebarWidth: 'vitrum-code-sidebar-width',
+  sidebarCollapsed: 'vitrum-code-sidebar-collapsed',
 };
 
 export default function CodeView() {

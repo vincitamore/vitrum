@@ -3,7 +3,7 @@ import { join } from 'path';
 import { randomUUID } from 'crypto';
 import type { PeerConfig, PeerEntry, PeerLiveStatus, PeerHelloResponse } from '../types/federation';
 
-const PEER_CONFIG_FILE = '.org-viewer-peers.json';
+const PEER_CONFIG_FILE = '.vitrum-peers.json';
 const POLL_INTERVAL_MS = 30_000;
 const BACKOFF_INTERVAL_MS = 120_000;
 const FAILURE_THRESHOLD = 3;

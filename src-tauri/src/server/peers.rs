@@ -8,7 +8,7 @@ use uuid::Uuid;
 
 use crate::server::log_to_file;
 
-const PEER_CONFIG_FILE: &str = ".org-viewer-peers.json";
+const PEER_CONFIG_FILE: &str = ".vitrum-peers.json";
 const POLL_INTERVAL_SECS: u64 = 30;
 const BACKOFF_INTERVAL_SECS: u64 = 120;
 const FAILURE_THRESHOLD: u32 = 3;

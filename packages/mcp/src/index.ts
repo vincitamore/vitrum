@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * org-viewer MCP Server
+ * Vitrum MCP Server
  *
- * Provides Claude Code integration for the org-viewer:
- * - Check if org-viewer is running
+ * Provides Claude Code integration for vitrum:
+ * - Check if vitrum is running
  * - Get URLs (local and Tailscale)
  * - Open specific documents
  * - Force index rebuild
@@ -24,7 +24,7 @@ import * as os from 'os';
 // ============================================================================
 
 const DEFAULT_PORT = 3847;
-const SERVER_URL = process.env.ORG_VIEWER_URL || `http://localhost:${DEFAULT_PORT}`;
+const SERVER_URL = process.env.VITRUM_URL || process.env.ORG_VIEWER_URL || `http://localhost:${DEFAULT_PORT}`;
 
 // ============================================================================
 // Helper Functions
@@ -63,8 +63,8 @@ function getMachineHostname(): string {
 
 const tools: Tool[] = [
   {
-    name: 'org_viewer_status',
-    description: 'Check if org-viewer server is running and get basic stats. Returns server health, document counts, and index status.',
+    name: 'vitrum_status',
+    description: 'Check if vitrum server is running and get basic stats. Returns server health, document counts, and index status.',
     inputSchema: {
       type: 'object',
       properties: {},
@@ -72,8 +72,8 @@ const tools: Tool[] = [
     },
   },
   {
-    name: 'org_viewer_url',
-    description: 'Get the URL(s) for accessing org-viewer. Returns local URL and Tailscale URL if available.',
+    name: 'vitrum_url',
+    description: 'Get the URL(s) for accessing vitrum. Returns local URL and Tailscale URL if available.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -87,8 +87,8 @@ const tools: Tool[] = [
     },
   },
   {
-    name: 'org_viewer_open',
-    description: 'Get the URL to open a specific document in org-viewer. Returns the full URL path that can be opened in a browser.',
+    name: 'vitrum_open',
+    description: 'Get the URL to open a specific document in vitrum. Returns the full URL path that can be opened in a browser.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -101,8 +101,8 @@ const tools: Tool[] = [
     },
   },
   {
-    name: 'org_viewer_refresh',
-    description: 'Force the org-viewer to rebuild its document index. Useful after bulk file operations.',
+    name: 'vitrum_refresh',
+    description: 'Force vitrum to rebuild its document index. Useful after bulk file operations.',
     inputSchema: {
       type: 'object',
       properties: {},
@@ -110,8 +110,8 @@ const tools: Tool[] = [
     },
   },
   {
-    name: 'org_viewer_search',
-    description: 'Search documents in org-viewer. Returns matching documents with paths and excerpts.',
+    name: 'vitrum_search',
+    description: 'Search documents in vitrum. Returns matching documents with paths and excerpts.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -133,7 +133,7 @@ const tools: Tool[] = [
     },
   },
   {
-    name: 'org_viewer_publish',
+    name: 'vitrum_publish',
     description: 'Generate tag index pages from document frontmatter tags. Creates/updates files in tags/ directory for graph navigation.',
     inputSchema: {
       type: 'object',
@@ -142,7 +142,7 @@ const tools: Tool[] = [
     },
   },
   {
-    name: 'org_viewer_tag_stats',
+    name: 'vitrum_tag_stats',
     description: 'Get tag usage statistics - which tags are most used, orphan tags, etc.',
     inputSchema: {
       type: 'object',
@@ -156,7 +156,7 @@ const tools: Tool[] = [
 // Tool Handlers
 // ============================================================================
 
-async function handleOrgViewerStatus(): Promise<string> {
+async function handleVitrumStatus(): Promise<string> {
   try {
     const health = await fetchJson(`${SERVER_URL}/api/health`) as { status: string; timestamp: string };
     const status = await fetchJson(`${SERVER_URL}/api/status`) as {
@@ -181,12 +181,12 @@ async function handleOrgViewerStatus(): Promise<string> {
       running: false,
       error: error instanceof Error ? error.message : 'Unknown error',
       url: SERVER_URL,
-      hint: 'Start the server with: cd projects/org-viewer && pnpm dev:server',
+      hint: 'Start vitrum with: cd instruments/vitrum && pnpm dev:server',
     }, null, 2);
   }
 }
 
-async function handleOrgViewerUrl(format: string = 'all'): Promise<string> {
+async function handleVitrumUrl(format: string = 'all'): Promise<string> {
   const localUrl = SERVER_URL;
   const tailscaleHost = getTailscaleHostname();
   const machineHost = getMachineHostname();
@@ -214,7 +214,7 @@ async function handleOrgViewerUrl(format: string = 'all'): Promise<string> {
   }
 }
 
-async function handleOrgViewerOpen(docPath: string): Promise<string> {
+async function handleVitrumOpen(docPath: string): Promise<string> {
   // Normalize path (remove .md extension, handle backslashes)
   const normalizedPath = docPath
     .replace(/\\/g, '/')
@@ -236,7 +236,7 @@ async function handleOrgViewerOpen(docPath: string): Promise<string> {
   }, null, 2);
 }
 
-async function handleOrgViewerRefresh(): Promise<string> {
+async function handleVitrumRefresh(): Promise<string> {
   try {
     const result = await fetchJson(`${SERVER_URL}/api/status/reindex`, {
       method: 'POST',
@@ -255,7 +255,7 @@ async function handleOrgViewerRefresh(): Promise<string> {
   }
 }
 
-async function handleOrgViewerSearch(
+async function handleVitrumSearch(
   query: string,
   type: string = 'all',
   limit: number = 20
@@ -289,12 +289,12 @@ async function handleOrgViewerSearch(
   } catch (error) {
     return JSON.stringify({
       error: error instanceof Error ? error.message : 'Unknown error',
-      hint: 'Is org-viewer running?',
+      hint: 'Is vitrum running?',
     }, null, 2);
   }
 }
 
-async function handleOrgViewerPublish(): Promise<string> {
+async function handleVitrumPublish(): Promise<string> {
   try {
     const result = await fetchJson(`${SERVER_URL}/api/publish/tags`, {
       method: 'POST',
@@ -322,12 +322,12 @@ async function handleOrgViewerPublish(): Promise<string> {
     return JSON.stringify({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
-      hint: 'Is org-viewer running?',
+      hint: 'Is vitrum running?',
     }, null, 2);
   }
 }
 
-async function handleOrgViewerTagStats(): Promise<string> {
+async function handleVitrumTagStats(): Promise<string> {
   try {
     const result = await fetchJson(`${SERVER_URL}/api/publish/tags/stats`) as {
       totalTags: number;
@@ -344,7 +344,7 @@ async function handleOrgViewerTagStats(): Promise<string> {
   } catch (error) {
     return JSON.stringify({
       error: error instanceof Error ? error.message : 'Unknown error',
-      hint: 'Is org-viewer running?',
+      hint: 'Is vitrum running?',
     }, null, 2);
   }
 }
@@ -355,8 +355,8 @@ async function handleOrgViewerTagStats(): Promise<string> {
 
 const server = new Server(
   {
-    name: 'org-viewer-mcp',
-    version: '0.1.0',
+    name: 'vitrum-mcp',
+    version: '0.2.0',
   },
   {
     capabilities: {
@@ -378,36 +378,36 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     let result: string;
 
     switch (name) {
-      case 'org_viewer_status':
-        result = await handleOrgViewerStatus();
+      case 'vitrum_status':
+        result = await handleVitrumStatus();
         break;
 
-      case 'org_viewer_url':
-        result = await handleOrgViewerUrl((args as { format?: string })?.format);
+      case 'vitrum_url':
+        result = await handleVitrumUrl((args as { format?: string })?.format);
         break;
 
-      case 'org_viewer_open':
-        result = await handleOrgViewerOpen((args as { path: string }).path);
+      case 'vitrum_open':
+        result = await handleVitrumOpen((args as { path: string }).path);
         break;
 
-      case 'org_viewer_refresh':
-        result = await handleOrgViewerRefresh();
+      case 'vitrum_refresh':
+        result = await handleVitrumRefresh();
         break;
 
-      case 'org_viewer_search':
-        result = await handleOrgViewerSearch(
+      case 'vitrum_search':
+        result = await handleVitrumSearch(
           (args as { query: string; type?: string; limit?: number }).query,
           (args as { type?: string }).type,
           (args as { limit?: number }).limit
         );
         break;
 
-      case 'org_viewer_publish':
-        result = await handleOrgViewerPublish();
+      case 'vitrum_publish':
+        result = await handleVitrumPublish();
         break;
 
-      case 'org_viewer_tag_stats':
-        result = await handleOrgViewerTagStats();
+      case 'vitrum_tag_stats':
+        result = await handleVitrumTagStats();
         break;
 
       default:
@@ -436,7 +436,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('org-viewer MCP server running on stdio');
+  console.error('vitrum MCP server running on stdio');
 }
 
 main().catch(console.error);

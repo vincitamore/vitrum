@@ -33,3 +33,4 @@ certs/
 
 # Index cache
 .org-viewer-index.json
+org-viewer.exe

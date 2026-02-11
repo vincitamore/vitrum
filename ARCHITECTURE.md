@@ -1,4 +1,4 @@
-# org-viewer Architecture
+# Vitrum Architecture
 
 > A native app + PWA for viewing materia documents over Tailscale.
 

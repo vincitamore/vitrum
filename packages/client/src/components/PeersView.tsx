@@ -99,7 +99,7 @@ export default function PeersView({ onSelectPeerDocument }: PeersViewProps) {
       <div className="max-w-4xl mx-auto space-y-4">
         <h2 style={{ color: 'var(--term-primary)' }}>Federation</h2>
         <div className="border p-4" style={{ borderColor: 'var(--term-border)', color: 'var(--term-muted)' }}>
-          No federation configured. Add peers to <code>.org-viewer-peers.json</code> to enable cross-org collaboration.
+          No federation configured. Add peers to <code>.vitrum-peers.json</code> to enable cross-org collaboration.
         </div>
       </div>
     );
@@ -230,7 +230,7 @@ export default function PeersView({ onSelectPeerDocument }: PeersViewProps) {
           {/* No peers */}
           {peersData.peers.length === 0 && (
             <div className="border p-4 text-sm" style={{ borderColor: 'var(--term-border)', color: 'var(--term-muted)' }}>
-              No peers configured. Edit <code>.org-viewer-peers.json</code> to add team members.
+              No peers configured. Edit <code>.vitrum-peers.json</code> to add team members.
             </div>
           )}
         </div>

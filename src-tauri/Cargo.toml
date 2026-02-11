@@ -1,7 +1,7 @@
 [package]
-name = "org-viewer"
-version = "0.1.0"
-description = "Personal organization system viewer"
+name = "vitrum"
+version = "0.2.0"
+description = "Vitrum — the glass through which materia is seen"
 authors = ["Alex Moyer"]
 license = "MIT"
 repository = ""

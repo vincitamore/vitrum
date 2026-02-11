@@ -1,16 +1,16 @@
 {
-  "name": "org-viewer",
+  "name": "vitrum",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@9.0.0",
   "scripts": {
     "dev": "turbo dev",
-    "dev:server": "pnpm --filter @org-viewer/server dev",
-    "dev:client": "pnpm --filter @org-viewer/client dev",
+    "dev:server": "pnpm --filter @vitrum/server dev",
+    "dev:client": "pnpm --filter @vitrum/client dev",
     "build": "turbo build",
-    "build:server": "pnpm --filter @org-viewer/server build",
-    "build:client": "pnpm --filter @org-viewer/client build",
-    "build:mcp": "pnpm --filter @org-viewer/mcp build",
+    "build:server": "pnpm --filter @vitrum/server build",
+    "build:client": "pnpm --filter @vitrum/client build",
+    "build:mcp": "pnpm --filter @vitrum/mcp build",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build"

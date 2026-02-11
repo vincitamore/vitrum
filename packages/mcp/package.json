@@ -1,11 +1,11 @@
 {
-  "name": "@org-viewer/mcp",
-  "version": "0.1.0",
-  "description": "MCP server for org-viewer integration with Claude Code",
+  "name": "@vitrum/mcp",
+  "version": "0.2.0",
+  "description": "MCP server for vitrum integration with Claude Code",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "org-viewer-mcp": "dist/index.js"
+    "vitrum-mcp": "dist/index.js"
   },
   "scripts": {
     "build": "tsc",

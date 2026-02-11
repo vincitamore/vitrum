@@ -138,7 +138,7 @@ export const themes: Record<string, TerminalTheme> = {
   },
 };
 
-const THEME_STORAGE_KEY = 'org-viewer-theme';
+const THEME_STORAGE_KEY = 'vitrum-theme';
 const DEFAULT_THEME = 'horizon';
 
 interface ThemeContextValue {

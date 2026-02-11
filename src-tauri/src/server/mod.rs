@@ -33,7 +33,7 @@ use sync::SyncService;
 use watcher::FileWatcher;
 
 pub fn log_to_file(msg: &str) {
-    let log_path = env::temp_dir().join("org-viewer.log");
+    let log_path = env::temp_dir().join("vitrum.log");
     if let Ok(mut file) = OpenOptions::new()
         .create(true)
         .append(true)

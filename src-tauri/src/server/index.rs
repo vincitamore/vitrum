@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 use walkdir::WalkDir;
 
-const INDEX_FILENAME: &str = ".org-viewer-index.json";
+const INDEX_FILENAME: &str = ".vitrum-index.json";
 
 /// Cached entry with modification time for incremental updates
 #[derive(Debug, Clone, Serialize, Deserialize)]

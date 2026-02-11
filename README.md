@@ -1,8 +1,8 @@
-# Org Viewer
+# Vitrum
 
-A lightweight, personal document viewer for [materia](https://github.com/vincitamore/materia-template) systems. Runs locally, accessible via Tailscale, installable as a PWA.
+The glass through which materia is seen. A lightweight document viewer for [materia](https://github.com/vincitamore/materia-template) systems. Runs locally, accessible via Tailscale, installable as a PWA.
 
-> **Note**: This viewer is designed specifically for the materia personal organization system. Get started with the [materia-template](https://github.com/vincitamore/materia-template).
+> **Note**: Vitrum is designed for the materia personal organization system. Get started with the [materia-template](https://github.com/vincitamore/materia-template).
 
 ![Dashboard](screenshots/org-viewer-dashboard.png)
 
@@ -91,7 +91,7 @@ pnpm build
 ## Architecture
 
 ```
-org-viewer/
+vitrum/
 ├── packages/
 │   ├── server/       # Bun + Hono backend (standalone mode)
 │   ├── client/       # React + Vite PWA
@@ -221,6 +221,6 @@ pnpm tauri dev
 pnpm tauri build
 ```
 
-The built executable is at `src-tauri/target/release/org-viewer.exe`.
+The built executable is at `src-tauri/target/release/vitrum.exe`.
 
-**Note:** Always use `pnpm tauri build` (not `cargo build`). This builds the frontend first, then bundles it into the native app. See the [build process knowledge article](https://github.com/vincitamore/org-viewer/wiki) for deployment details.
+**Note:** Always use `pnpm tauri build` (not `cargo build`). This builds the frontend first, then bundles it into the native app.

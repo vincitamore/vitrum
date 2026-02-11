@@ -10,9 +10,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Org Viewer',
-        short_name: 'OrgViewer',
-        description: 'Personal organization system viewer',
+        name: 'Vitrum',
+        short_name: 'Vitrum',
+        description: 'Vitrum — the glass through which materia is seen',
         theme_color: '#1c1e26',
         background_color: '#1c1e26',
         display: 'standalone',
